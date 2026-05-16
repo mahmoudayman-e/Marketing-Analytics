@@ -1,4 +1,11 @@
 📊 Marketing Analytics Project – Customer Sentiment Analysis & Dashboard
+
+<img width="2820" height="1681" alt="Marketing Analytics-1" src="https://github.com/user-attachments/assets/13d8325f-0fd1-47ed-9c6b-567fe959e3be" />
+<img width="2820" height="1681" alt="Marketing Analytics-2" src="https://github.com/user-attachments/assets/27759a63-6574-4740-9939-29ac28ddbd3c" />
+<img width="2820" height="1681" alt="Marketing Analytics-3" src="https://github.com/user-attachments/assets/b10df434-e259-4492-8023-d614b0f6ddd2" />
+<img width="2820" height="1681" alt="Marketing Analytics-4" src="https://github.com/user-attachments/assets/3a048894-0def-4ef3-af9d-e71fab1f54c6" />
+
+
 🔍 Overview
 
 This project focuses on marketing analytics and customer sentiment analysis to extract insights from customer reviews.
