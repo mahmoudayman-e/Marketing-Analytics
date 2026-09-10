@@ -1,144 +1,86 @@
-📊 Marketing Analytics Project – Customer Sentiment Analysis & Dashboard
+# Omni-Channel Digital Marketing Performance & Customer Sentiment Analytics
+
+## 📌 Project Overview
+This repository showcases an advanced, enterprise-grade **End-to-End Customer Marketing Analytics & Sentiment Modeling** solution. The project demonstrates an elite multi-stage production data pipeline: utilizing **T-SQL (SQL Server)** for high-density database cleaning, window functions, and relational optimization, **Python (NLTK VADER)** for programmatic NLP sentiment classification, and **Power BI** for deploying an executive 4-page interactive tracking application.
+
+The core business objective is to diagnose the end-to-end conversion funnel from marketing touchpoints to purchase fulfillment, isolate engagement channels, and translate qualitative customer feedback text into quantitative strategic metrics.
+
+---
+
+## 🛠️ Technical Toolkit & Skills Demonstrated
+* **Database Engineering & ETL (T-SQL):** Formulated complex CTEs, analytical window functions (`ROW_NUMBER() OVER`), string splitting/extraction routines, handle missing values utilizing `COALESCE`, and metadata normalization (`UPPER`, `REPLACE`).
+* **Natural Language Processing & AI (Python):** Integrated the `nltk.sentiment.vader` analyzer to programmatically evaluate customer feedback text, scoring compound polarities and structuring discrete behavioral buckets.
+* **Business Intelligence (Power BI):** Engineered a responsive, 4-page cross-functional dashboard canvas (`Overview`, `Conversion Details`, `Social Media Details`, `Customer Review Details`).
+
+---
+
+## 🗄️ Phase 1: Relational Data Engineering & Validation (T-SQL)
+Before downstream modeling, the raw operational schemas were cleaned, deduplicated, and unified using SQL Server scripts to establish total metric integrity.
+
+```sql
+-- Deduplicating Customer Journey records and handling duration nulls with baseline averages
+WITH DuplicateRecords AS (
+    SELECT JourneyID, CustomerID, ProductID, VisitDate, Stage, Action, Duration,
+           ROW_NUMBER() OVER(PARTITION BY CustomerID, ProductID, VisitDate, Stage, Action ORDER BY JourneyID) AS row_num
+    FROM dbo.customer_journey
+)
+SELECT JourneyID, CustomerID, ProductID, VisitDate, UPPER(Stage) AS Stage, Action,
+       COALESCE(Duration, AVG(Duration) OVER(PARTITION BY VisitDate)) AS Duration
+FROM (
+    SELECT *, ROW_NUMBER() OVER(PARTITION BY CustomerID, ProductID, VisitDate, UPPER(Stage), Action ORDER BY JourneyID) AS row_num
+    FROM dbo.customer_journey
+) AS subquery WHERE row_num = 1;
+
+-- Normalizing mixed engagement structures and parsing Views vs Clicks fields
+SELECT EngagementID, ContentID, CampaignID, ProductID,
+       UPPER(REPLACE(ContentType, 'Socialmedia', 'Social Media')) AS ContentType,
+       LEFT(ViewsClicksCombined, CHARINDEX('-', ViewsClicksCombined) - 1) AS Views,
+       RIGHT(ViewsClicksCombined, LEN(ViewsClicksCombined) - CHARINDEX('-', ViewsClicksCombined)) AS Clicks,
+       Likes, FORMAT(CONVERT(DATE, EngagementDate), 'dd.MM.yyyy') AS EngagementDate
+FROM dbo.engagement_data WHERE ContentType != 'Newsletter';
+```
+
+---
+
+## 🐍 Phase 2: NLP Text Sentiment Analysis (Python Pipeline)
+To extract true operational feedback, a Python pipeline was engineered to process unstructured customer review text data fetched directly from the SQL staging schema, using VADER Lexicon analysis.
+```python
+import pandas as pd
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+# Fetch staging reviews and compute compound VADER sentiment polarities
+sia = SentimentIntensityAnalyzer()
+customer_reviews_df['SentimentScore'] = customer_reviews_df['ReviewText'].apply(lambda x: sia.polarity_scores(x)['compound'])
+
+# Rule-based contextual labeling integrating score and numeric rating thresholds
+def categorize_sentiment(score, rating):
+    if score > 0.05 and rating >= 4: return 'Positive'
+    elif score < -0.05 and rating <= 2: return 'Negative'
+    else: return 'Neutral'
+
+customer_reviews_df['SentimentCategory'] = customer_reviews_df.apply(lambda r: categorize_sentiment(r['SentimentScore'], r['Rating']), axis=1)
+```
+
+---
+
+## 📊 Phase 3: Executive Reporting Architecture (Power BI Sheets)
+The unified dataset feeds an interactive workspace across 4 comprehensive analytical modules:
+
+1. **Executive Overview Page:** Consolidates macro-level operational metrics: Global **Conversion Rate (8.5%)**, Total Traffic (**2.98M Views**), **458K Clicks**, and Average Product Reviews (**3.67**). Tracks monthly engagement trajectories and volume distributions.
+<img width="2820" height="1681" alt="Marketing Analytics-1" src="https://github.com/user-attachments/assets/a421bb30-f001-49ae-9f42-d3947c8478df" />
+2. **Conversion Details Page:** Deep-dives into individual customer lifecycle stages (View -> Click -> Drop-off -> Purchase) mapped against seasonal heatmaps and product item purchase rates.
+<img width="2820" height="1681" alt="Marketing Analytics-2" src="https://github.com/user-attachments/assets/658c79d2-a109-42f6-aa24-34c4ee37096a" />
+
+3. **Social Media Engagement Page:** Evaluates content channel performance (Blog, Social Media, Video) against transactional metrics, filtering absolute reach trends across multiple calendar months.
+<img width="2820" height="1681" alt="Marketing Analytics-3" src="https://github.com/user-attachments/assets/57116ea3-1739-49b5-825a-1473fde037a6" />
+4. **Customer Review Details Page:** Bridges the qualitative gap by cross-filtering raw `ReviewText` strings directly against categorical classifications (`Positive`, `Neutral`, `Negative`) and product satisfaction matrices.
+<img width="2820" height="1681" alt="Marketing Analytics-4" src="https://github.com/user-attachments/assets/80e78a5a-4872-46bb-8fda-64f36bea68e5" />
+
+
+---
+
+## 🚀 Execution Instructions
+1. Execute the production initialization scripts located in the `sql/` directory to configure tables and schemas.
+2. Run the `sentiment_analysis.ipynb` Python notebook to append the modeled NLP scores to your data frame.
+3. Open the `.pbix` compiled visual map inside the `dashboard/` canvas using **Power BI Desktop** to navigate across campaign timelines.
 
-<img width="2820" height="1681" alt="Marketing Analytics-1" src="https://github.com/user-attachments/assets/13d8325f-0fd1-47ed-9c6b-567fe959e3be" />
-<img width="2820" height="1681" alt="Marketing Analytics-2" src="https://github.com/user-attachments/assets/27759a63-6574-4740-9939-29ac28ddbd3c" />
-<img width="2820" height="1681" alt="Marketing Analytics-3" src="https://github.com/user-attachments/assets/b10df434-e259-4492-8023-d614b0f6ddd2" />
-<img width="2820" height="1681" alt="Marketing Analytics-4" src="https://github.com/user-attachments/assets/3a048894-0def-4ef3-af9d-e71fab1f54c6" />
-
-
-🔍 Overview
-
-This project focuses on marketing analytics and customer sentiment analysis to extract insights from customer reviews.
-Using Python, customer feedback is explored, cleaned, and enriched with sentiment scores.
-The sentiment-enriched data is exported to a CSV file, analyzed using SQL Server, and visualized through an interactive Power BI dashboard.
-
-📁 Dataset
-
-Marketing dataset containing customer reviews and related attributes
-
-Format: CSV
-
-Data includes unstructured text used for sentiment analysis
-
-Output: sentiment-enriched CSV generated from Python
-
-🛠 Tools & Technologies
-
-Python (Pandas, NumPy, NLTK / TextBlob / VADER)
-
-SQL Server
-
-SQL Server Management Studio (SSMS)
-
-Power BI
-
-Jupyter Notebook
-
-🔄 Project Workflow
-
-Load customer reviews dataset in Python
-
-Perform Exploratory Data Analysis (EDA)
-
-Clean and preprocess text and structured data
-
-Apply sentiment analysis on customer reviews
-
-Generate sentiment scores and labels
-
-Export enriched data to a CSV file
-
-Load the CSV file into SQL Server
-
-Run SQL queries for marketing insights
-
-Build a Power BI dashboard
-
-🧹 Data Cleaning & Sentiment Enrichment
-
-Handling missing and duplicate values
-
-Standardizing column formats
-
-Cleaning text data (lowercasing, removing punctuation and stopwords)
-
-Applying sentiment analysis to classify reviews as:
-
-Positive
-
-Neutral
-
-Negative
-
-Adding sentiment score and sentiment label columns
-
-Saving the final enriched dataset as a CSV file
-
-🗂 Python Script
-
-File: customer_reviews_enrichment.ipynb
-
-Responsibilities:
-
-Data loading and EDA
-
-Data cleaning and preprocessing
-
-Sentiment analysis on customer reviews
-
-Exporting sentiment-enriched data to CSV
-
-🗄 SQL Analysis
-
-Imported the sentiment-enriched CSV file into SQL Server
-
-Executed SQL queries to:
-
-Analyze sentiment distribution
-
-Segment customers by sentiment
-
-Identify trends and key marketing metrics
-
-Prepared clean datasets for reporting
-
-📈 Power BI Dashboard
-
-The Power BI dashboard is built using data from SQL Server and includes:
-
-Overall sentiment distribution
-
-Marketing KPIs
-
-Sentiment trends and comparisons
-
-Interactive filters for analysis by category, time, or sentiment
-
-📌 Results & Insights
-
-Identified key customer sentiment patterns
-
-Highlighted drivers of negative and positive feedback
-
-Supported marketing decision-making using sentiment data
-
-Delivered insights through a clear and interactive dashboard
-
-▶️ How to Run the Project
-
-Clone the repository from GitHub
-
-Open and run customer_reviews_enrichment.ipynb
-
-Generate the sentiment-enriched CSV file
-
-Import the CSV file into SQL Server
-
-Execute the SQL queries
-
-Open the Power BI (.pbix) file to explore the dashboard
-
-👤 Author
-
-Mahmoud Ayman
-Marketing Analytics | Python • SQL • Power BI
